@@ -12,27 +12,12 @@ interface IVideoPlayerProps {
 
 const initialOptions: videojs.PlayerOptions = {
   muted: true,
-  autoplay: true,
-  controls: true,
   responsive: true,
-  playbackRates: [0.5, 1, 1.5, 2],
   fluid: true,
-  controlBar: {
-    volumePanel: {
-      inline: false,
-    },
-  },
 };
 
 const VideoPlayer: React.FC<IVideoPlayerProps> = ({ options }) => {
-  const Navigate = useNavigate();
-  const videoNode = useRef<HTMLVideoElement | null>(null);
-  const player = useRef<videojs.Player>();
-  const [videoInfo, setVideoInfo] = useState({
-    totalDuration: 0,
-    currentTime: 0,
-  });
-
+  const [isPlayed, setIsPlayed] = useState(false);
   function getVideoInfo(player: videojs.Player) {
     const totalDuration = player.duration();
     const currentTime = player.currentTime();
@@ -44,6 +29,14 @@ const VideoPlayer: React.FC<IVideoPlayerProps> = ({ options }) => {
     const seconds = Math.floor(timeInSeconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
+
+  const Navigate = useNavigate();
+  const videoNode = useRef<HTMLVideoElement | null>(null);
+  const player = useRef<videojs.Player>();
+  const [videoInfo, setVideoInfo] = useState({
+    totalDuration: 0,
+    currentTime: 0,
+  });
 
   useEffect(() => {
     if (videoNode.current) {
@@ -77,8 +70,32 @@ const VideoPlayer: React.FC<IVideoPlayerProps> = ({ options }) => {
       <ProgressBar
         totalDuration={videoInfo.totalDuration}
         currentDuration={videoInfo.currentTime}
+        onProgressChange={(value: number) => {
+          if (!videoNode.current) return;
+          const duration = videoNode.current.duration;
+          const newTime = (value / 100) * duration;
+          videoNode.current.currentTime = newTime;
+        }}
       />
-      <button onClick={() => Navigate("/")}>Back To Home Page</button>
+      <button
+        onClick={() => {
+          if (isPlayed) {
+            videoNode.current?.pause();
+          } else if (!isPlayed) {
+            videoNode.current?.play();
+          }
+          setIsPlayed(!isPlayed);
+        }}
+      >
+        {isPlayed ? "Stop" : "Play"}
+      </button>
+      <button
+        onClick={() => {
+          Navigate("/");
+        }}
+      >
+        return to home page
+      </button>
     </div>
   );
 };
